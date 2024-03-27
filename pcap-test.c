@@ -1,6 +1,8 @@
 #include <pcap.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <libnet.h>
 
 void usage() {
 	printf("syntax: pcap-test <interface>\n");
@@ -45,6 +47,53 @@ int main(int argc, char* argv[]) {
 			break;
 		}
 		printf("%u bytes captured\n", header->caplen);
+		printf("1\n");
+		//mine libnet_ethernet_hdr
+		struct libnet_ethernet_hdr* eth_hdr = (struct libnet_ethernet_hdr*)packet;
+		struct libnet_ipv4_hdr* ipv4_hdr = (struct libnet_ipv4_hdr*)(packet+sizeof(*eth_hdr));
+		struct libnet_tcp_hdr* tcp_hdr = (struct libnet_tcp_hdr*)(packet+sizeof(*eth_hdr)+sizeof(*ipv4_hdr));
+		uint8_t* data = (uint8_t*)(packet + sizeof(*eth_hdr)+sizeof(*ipv4_hdr)+sizeof(*tcp_hdr));	
+		printf("%d\n",eth_hdr->ether_type);
+		if(1){//ntohs(eth_hdr -> ether_type) == 8){
+			printf("src mac: ");
+			for(int i=0;i<ETHER_ADDR_LEN-1; i++){
+				printf("%02x:",eth_hdr->ether_shost[i]);
+			}
+			printf("%02x\n",eth_hdr->ether_shost[ETHER_ADDR_LEN-1]);
+			printf("dst mac: ");
+			for(int i=0;i<ETHER_ADDR_LEN-1; i++){
+				printf("%02x:",eth_hdr->ether_dhost[i]);
+			}
+			printf("%02x\n",eth_hdr->ether_dhost[ETHER_ADDR_LEN-1]);
+			printf("src ip: ");
+			ulong k = ipv4_hdr->ip_src.s_addr;
+			for(int i=0;i<3;i++){
+				printf("%lu.",k%0x100);
+				k /= 0x100;		
+			}
+			printf("%lu\n",k%0x100);
+			printf("dst ip: ");
+			k = ipv4_hdr->ip_dst.s_addr;
+			for(int i=0;i<3;i++){
+				printf("%lu.",k%0x100);
+				k /= 0x100;		
+			}
+			printf("%lu\n",k%0x100);
+			printf("src port: ");				
+		        printf("%d\n",ntohs(tcp_hdr->th_sport));
+			printf("dst port: ");
+			printf("%d\n",ntohs(tcp_hdr->th_dport));
+			printf("hexadecimal value: ");
+			if((tcp_hdr->th_off*4)<=40){
+				for(int i=0;i<(tcp_hdr->th_off*4)-20;i++)
+					printf("%02x ", *(data+(tcp_hdr->th_off*4)-20-i));
+			}
+			else{
+				for(int i=0;i<20;i++)
+					printf("%02x ", *(data+19-i));				
+			}
+			printf("\n\n");
+		}
 	}
 
 	pcap_close(pcap);
