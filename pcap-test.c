@@ -47,14 +47,13 @@ int main(int argc, char* argv[]) {
 			break;
 		}
 		printf("%u bytes captured\n", header->caplen);
-		printf("1\n");
 		//mine libnet_ethernet_hdr
 		struct libnet_ethernet_hdr* eth_hdr = (struct libnet_ethernet_hdr*)packet;
 		struct libnet_ipv4_hdr* ipv4_hdr = (struct libnet_ipv4_hdr*)(packet+sizeof(*eth_hdr));
 		struct libnet_tcp_hdr* tcp_hdr = (struct libnet_tcp_hdr*)(packet+sizeof(*eth_hdr)+sizeof(*ipv4_hdr));
 		uint8_t* data = (uint8_t*)(packet + sizeof(*eth_hdr)+sizeof(*ipv4_hdr)+sizeof(*tcp_hdr));	
 		printf("%d\n",eth_hdr->ether_type);
-		if(1){//ntohs(eth_hdr -> ether_type) == 8){
+		if(ntohs(eth_hdr -> ether_type) == 8){
 			printf("src mac: ");
 			for(int i=0;i<ETHER_ADDR_LEN-1; i++){
 				printf("%02x:",eth_hdr->ether_shost[i]);
